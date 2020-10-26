@@ -14,6 +14,8 @@ const DrawingBoard = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [canvasImageData, setCanvasImageData] = useState({});
 
+  const [points, setPoints] = useState([]);
+
   const [markerStrokes, setMarkerStrokes] = useState(0);
 
   const [canvasColor] = useState(canvas.color);
@@ -35,7 +37,7 @@ const DrawingBoard = () => {
     context.strokeStyle = canvasColor;
     context.lineWidth = canvasStrokeWidth;
     contextRef.current = context;
-  }, []);
+  }, [canvasColor, canvasStrokeWidth]);
 
   useEffect(() => {
     contextRef.current.strokeStyle = canvas.color;
@@ -45,9 +47,6 @@ const DrawingBoard = () => {
   const startDrawing = ({ nativeEvent }) => {
     const { offsetX, offsetY } = nativeEvent;
     setIsDrawing(true);
-    contextRef.current.beginPath();
-    contextRef.current.translate(0.5, 0.5);
-    contextRef.current.moveTo(offsetX, offsetY);
 
     if (canvas.tool === "marker") {
       setCanvasImageData(
@@ -59,9 +58,13 @@ const DrawingBoard = () => {
         )
       );
       setMarkerStrokes((markerStrokes) => markerStrokes + 1);
-      contextRef.current.globalAlpha = 0.5;
-      contextRef.current.globalCompositeOperation = "source-atop";
+      contextRef.current.globalCompositeOperation = "destination-atop";
     }
+
+    contextRef.current.globalAlpha = 0.5;
+    contextRef.current.beginPath();
+    contextRef.current.translate(0.5, 0.5);
+    contextRef.current.moveTo(offsetX, offsetY);
   };
 
   const finishDrawing = () => {
@@ -70,14 +73,14 @@ const DrawingBoard = () => {
 
     if (canvas.tool === "marker") {
       console.log("Finish drawing");
-      contextRef.current.clearRect(
-        0,
-        0,
-        window.innerWidth * 2,
-        window.innerHeight * 2
-      );
+      // contextRef.current.clearRect(
+      //   0,
+      //   0,
+      //   window.innerWidth * 2,
+      //   window.innerHeight * 2
+      // );
       contextRef.current.putImageData(canvasImageData, 0, 0);
-      contextRef.current.globalCompositeOperation = "source-over";
+      // contextRef.current.globalCompositeOperation = "source-over";
       contextRef.current.globalAlpha = 1;
       if (markerStrokes) {
         setMarkerStrokes(0);
@@ -98,15 +101,6 @@ const DrawingBoard = () => {
   return (
     <div className={style.wrapper}>
       <Sidebar />
-      <div className={style.dataBoard}>
-        <h4 style={{ margin: "5px 0" }}>Canvas</h4>
-
-        <p style={{ margin: 0 }}>{`Tool: ${
-          canvas.tool ? canvas.tool : "none"
-        }, Stroke: ${canvas.strokeWidth}, Color ${canvas.color}`}</p>
-        <hr />
-        <p>{`Marker strokes - ${markerStrokes}`}</p>
-      </div>
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
